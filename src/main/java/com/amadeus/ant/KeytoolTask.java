@@ -13,22 +13,18 @@ import org.apache.tools.ant.types.FileSet;
 
 /**
  * Allows keytool functions to be invoked from Ant.
- * 
- * <p>
  * This is for creating a keystore:
  * <pre>
  *   &lt;target&gt;
  *     &lt;keytool action="create" keystore="file.jks"/&gt;
  *   &lt;/target&gt;
  * </pre>
- * </p><p>
- * This is for importing a single certificate.
+ * This is for importing a single certificate:
  * <pre>
  *   &lt;target&gt;
  *     &lt;keytool action="import" keystore="file.jks" certificate="file.crt"/&gt;
  *   &lt;/target&gt;
  * </pre>
- * </p><p>
  * This is for importing a batch (directory of certificates):
  * <pre>
  *   &lt;target&gt;
@@ -39,7 +35,6 @@ import org.apache.tools.ant.types.FileSet;
  *     &lt;/keytool&gt;
  *   &lt;/target&gt;
  * </pre>
- * </p>
  *
  * @author hiran.chaudhuri
  */

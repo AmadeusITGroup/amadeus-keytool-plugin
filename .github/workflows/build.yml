@@ -86,4 +86,70 @@ jobs:
     - uses: actions/upload-artifact@v4
       with:
         name: Amadeus-Keytool-Plugin
-        path: target/amadeus-keytool-plugin-${{ needs.semver.outputs.GITVERSION_SEMVER }}.jar
+        path: target/amadeus-keytool-plugin-${{ needs.semver.outputs.GITVERSION_SEMVER }}*.jar
+
+
+  release:
+    needs: [semver,build]
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+
+    - name: Check status
+      run: |
+        set
+        echo -n "Current directory: "
+        pwd
+        find . -not -path "./oolitestarter/.git/*"
+
+    - name: Remove old prereleases
+      if: github.ref != 'refs/heads/main'
+      uses: dev-drprasad/delete-older-releases@v0.3.2
+      with:
+        #repo: <owner>/<repoName> # defaults to current repo
+        keep_latest: 6
+        delete_tag_pattern: v\d+\.\d+\.\d+-.*
+        delete_prerelease_only: 'true'
+        #delete_branch: '${{ github.ref_name }}'
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Create Prerelease
+      if: github.ref != 'refs/heads/main'
+      id: create_prerelease
+      uses: "marvinpinto/action-automatic-releases@latest"
+      with:
+        repo_token: "${{ secrets.GITHUB_TOKEN }}"
+        automatic_release_tag: "v${{ needs.semver.outputs.GITVERSION_SEMVER }}"
+        prerelease: true
+        title: "Amadeus Keytool Plugin v${{ needs.semver.outputs.GITVERSION_SEMVER }}"
+        files: |
+          artifacts/Amadeus-Keytool-Plugin/*.*
+      
+    - name: Remove old releases
+      if: github.ref == 'refs/heads/main'
+      uses: dev-drprasad/delete-older-releases@v0.3.2
+      with:
+        #repo: <owner>/<repoName> # defaults to current repo
+        keep_latest: 4
+        delete_tag_pattern: v\d+\.\d+\.\d+
+        delete_prerelease_only: 'false'
+        #delete_branch: 'main'
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Create Release
+      if: github.ref == 'refs/heads/main'
+      id: create_release
+      uses: "marvinpinto/action-automatic-releases@latest"
+      with:
+        repo_token: "${{ secrets.GITHUB_TOKEN }}"
+        automatic_release_tag: "v${{ needs.semver.outputs.GITVERSION_SEMVER }}"
+        prerelease: false
+        title: "Amadeus Keytool Plugin v${{ needs.semver.outputs.GITVERSION_SEMVER }}"
+        files: |
+          artifacts/Amadeus-Keytool-Plugin/*.*
