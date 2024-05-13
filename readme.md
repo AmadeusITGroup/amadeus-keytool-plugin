@@ -16,9 +16,9 @@ But some IDEs still had problems with that, and we finally added a native
 Maven interface. With that now you have a choice how to run this jar
 and thus can integrate it into any build.
 
-## Usage
+## Usage in Maven
 
-To make use of the plugin, just add some lines to your projct's pom.xml.
+To make use of the plugin, just add some lines to your project's pom.xml.
 Below you see a huge example with many single executions. Very likely
 you will not need them all.
 
@@ -171,6 +171,10 @@ you will not need them all.
             </plugins>
         </build>
     </project>
+
+## Usage in Ant
+
+## Usage via CLI
 
 ## Build & Deployment
 

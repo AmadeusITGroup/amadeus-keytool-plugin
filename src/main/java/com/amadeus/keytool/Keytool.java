@@ -72,10 +72,10 @@ public class Keytool {
             throw new IllegalArgumentException("keystore must not be null");
         }
         if (certificateFile == null) {
-            throw new IllegalArgumentException("certificate is null");
+            throw new IllegalArgumentException("certificate must not be null");
         }
         if (alias == null) {
-            throw new IllegalArgumentException("alias is null");
+            throw new IllegalArgumentException("alias must not be null");
         }
 
         KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
