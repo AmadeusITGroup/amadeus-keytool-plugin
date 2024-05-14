@@ -131,17 +131,45 @@ public class KeytoolTest {
     public void testImportCertificate4() throws Exception {
         log.info("importCertificate4");
         
-        File keystore = new File("target/test/keystore.jks");
-        char[] pwdArray = null;
+        File keystore = new File("target/test/keystore4.jks");
+        char[] pwdArray = "password".toCharArray();
         String alias = "alias";
         File certificateFile = new File("target/test/certificate.crt");
+        
         Keytool instance = new Keytool();
 
         try {
             instance.importCertificate(keystore, pwdArray, alias, certificateFile);
             fail("Expected exception");
         } catch (FileNotFoundException e) {
-            assertTrue(e.getMessage().contains("target" + File.separator + "test" + File.separator + "keystore.jks"));
+            assertTrue(e.getMessage().contains("target" + File.separator + "test" + File.separator + "keystore4.jks"), "Exception message is: " + e.getMessage());
+            log.debug("caught expected exception", e);
+        }
+    }
+
+    /**
+     * Test of importCertificate method, of class Keytool.
+     */
+    @Test
+    public void testImportCertificate5() throws Exception {
+        log.info("importCertificate5");
+        
+        File keystore = new File("target/test/keystore5.jks");
+        char[] pwdArray = "password".toCharArray();
+        String alias = "alias";
+        File certificateFile = new File("target/test/certificate.crt");
+
+        if (keystore.getParentFile() != null) {
+            keystore.getParentFile().mkdirs();
+        }
+        Keytool instance = new Keytool();
+        instance.createKeystore(keystore, pwdArray);
+
+        try {
+            instance.importCertificate(keystore, pwdArray, alias, certificateFile);
+            fail("Expected exception");
+        } catch (FileNotFoundException e) {
+            assertTrue(e.getMessage().contains("target" + File.separator + "test" + File.separator + "certificate.crt"), "Exception message is: " + e.getMessage());
             log.debug("caught expected exception", e);
         }
     }

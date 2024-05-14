@@ -71,6 +71,116 @@ public class KeytoolMavenPlugin extends AbstractMojo {
      */
     @Parameter
     private FileSet[] filesets;
+
+    /**
+     * Returns the action to execute. Maven has access based on annotations,
+     * this method is introduced for unit testing.
+     * 
+     * @return the action
+     */
+    public String getAction() {
+        return action;
+    }
+
+    /**
+     * Sets the action to execute. Maven has access based on annotations,
+     * this method is introduced for unit testing.
+     * 
+     * @param action the action
+     */
+    public void setAction(String action) {
+        this.action = action;
+    }
+
+    /**
+     * Sets the keystore password. Maven has access based on annotations,
+     * this method is introduced for unit testing.
+     * 
+     * @param password the password
+     */
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    /**
+     * Returns the keystore. Maven has access based on annotations,
+     * this method is introduced for unit testing.
+     * 
+     * @return the keystore
+     */
+    public File getKeystore() {
+        return keystore;
+    }
+
+    /**
+     * Sets the keystore. Maven has access based on annotations,
+     * this method is introduced for unit testing.
+     * 
+     * @param keystore the keystore file
+     */
+    public void setKeystore(File keystore) {
+        this.keystore = keystore;
+    }
+
+    /**
+     * Returns the certificate file. Maven has access based on annotations,
+     * this method is introduced for unit testing.
+     * 
+     * @return the certificate file
+     */
+    public File getCertificateFile() {
+        return certificateFile;
+    }
+
+    /**
+     * Returns the certificate filesets. Maven has access based on annotations,
+     * this method is introduced for unit testing.
+     * 
+     * @return the filesets
+     */
+    public FileSet[] getFilesets() {
+        return filesets;
+    }
+
+    /**
+     * Sets the certificate filesets. Maven has access based on annotations,
+     * this method is introduced for unit testing.
+     * 
+     * @param filesets the filesets
+     */
+    public void setFilesets(FileSet[] filesets) {
+        this.filesets = filesets;
+    }
+
+    /**
+     * Returns the certificate alias. Maven has access based on annotations,
+     * this method is introduced for unit testing.
+     * 
+     * @return the alias
+     */
+    public String getCertificateAlias() {
+        return certificateAlias;
+    }
+
+    /**
+     * Sets the certificate alias. Maven has access based on annotations,
+     * this method is introduced for unit testing.
+     * 
+     * @param certificateAlias the alias
+     */
+    public void setCertificateAlias(String certificateAlias) {
+        this.certificateAlias = certificateAlias;
+    }
+
+    /**
+     * Sets the certificate file. Maven has access based on annotations,
+     * this method is introduced for unit testing.
+     * 
+     * @param certificateFile the certificate file
+     */
+    public void setCertificateFile(File certificateFile) {
+        this.certificateFile = certificateFile;
+    }
 	
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
@@ -82,20 +192,23 @@ public class KeytoolMavenPlugin extends AbstractMojo {
 		
         try {
             if (action == null) {
-                throw new IllegalArgumentException("Action must be set.");
+                throw new IllegalArgumentException("action must be set");
+            }
+            if (keystore == null) {
+                throw new IllegalArgumentException("keystore must be set");
             }
             if (password == null) {
-                throw new IllegalArgumentException("password must be set.");
+                throw new IllegalArgumentException("password must be set");
             }
             if ("create".equals(action)) {
                 if (certificateFile != null || haveFileset()) {
-                    throw new  IllegalArgumentException("Must not have a fileset or a certificate");
+                    throw new IllegalArgumentException("Must not have a fileset or a certificate");
                 }
 	            
                 if (keystore.exists()) {
                     getLog().info("Keystore file already exists");
                 } else {
-                    if (!keystore.getParentFile().exists()) {
+                    if (keystore.getParentFile() != null && !keystore.getParentFile().exists()) {
                         keystore.getParentFile().mkdirs();
                     }
                     new Keytool().createKeystore(keystore, password.toCharArray());
@@ -103,10 +216,10 @@ public class KeytoolMavenPlugin extends AbstractMojo {
                 }
             } else if ("import".equals(action) ) {
                 if (certificateFile == null && !haveFileset()) {
-                    throw new  IllegalArgumentException("you must have either a fileset or a certificate");
+                    throw new IllegalArgumentException("you must have either a fileset or a certificate");
                 }
                 if (certificateFile != null && haveFileset()) {
-                    throw new  IllegalArgumentException("you must have either a fileset or a certificate");
+                    throw new IllegalArgumentException("you must have either a fileset or a certificate");
                 }
                 if (certificateFile != null) {
                     if (certificateAlias == null) {
@@ -119,15 +232,17 @@ public class KeytoolMavenPlugin extends AbstractMojo {
                 }
             } else if ("list".equals(action)) {
                 if (certificateFile != null || haveFileset()) {
-                    throw new  IllegalArgumentException("Must not have a fileset or a certificate");
+                    throw new IllegalArgumentException("Must not have a fileset or a certificate");
                 }
 
                 new Keytool().listCertificate(keystore, password.toCharArray(), verbose);
-            }else {
+            } else {
                 throw new IllegalArgumentException("unknown action " + action + " Allowed is [create, import, list]");
             }
+        } catch (NullPointerException e) {
+            throw e;
         } catch (Exception e) {
-            throw new BuildException("Could not execute '" + action + "'.", e);
+            throw new BuildException(e.getClass().getName() + ": " + e.getMessage(), e);
         }
     }
 
@@ -142,25 +257,38 @@ public class KeytoolMavenPlugin extends AbstractMojo {
      * 
      */
     private void importAll() throws KeyStoreException, java.io.IOException, CertificateException, NoSuchAlgorithmException {
+        if (filesets == null) {
+            throw new IllegalStateException("filesets must not be null");
+        }
+        
         int count = 0;
   
         FileSetManager fileSetManager = new FileSetManager();
 
         for (FileSet fileset: filesets) {
-            String[] files = fileSetManager.getIncludedFiles(fileset);
-            for (String includedFile: files) {
-                File cert = new File(fileset.getDirectory() + "/" + includedFile);
-                getLog().info("importing " + cert);
+            if (fileset == null) {
+                throw new IllegalStateException("filesets must not contain null entries");
+            }
+            String[] files = null;
+            try {
+                files = fileSetManager.getIncludedFiles(fileset);
 
-                // now import the cert file with alias cert.getName() into the keystore
-                new Keytool().importCertificate(keystore, password.toCharArray(), includedFile, cert);
-                count++;
+                for (String includedFile: files) {
+                    File cert = new File(fileset.getDirectory() + "/" + includedFile);
+                    getLog().info("importing " + cert);
+
+                    // now import the cert file with alias cert.getName() into the keystore
+                    new Keytool().importCertificate(keystore, password.toCharArray(), includedFile, cert);
+                    count++;
+                }
+            } catch (NullPointerException e) {
+                getLog().warn("FileSet has no included files");
             }
         }
         getLog().info(String.format("Imported %d certificates", count));
     }
     
-    private boolean haveFileset() {
+    boolean haveFileset() {
     	getLog().debug("filesets=" + filesets);
     	
     	if (filesets == null) {
