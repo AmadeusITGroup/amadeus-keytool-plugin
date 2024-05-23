@@ -70,6 +70,9 @@ jobs:
       with:
         java-version: '17'
         distribution: 'adopt'
+        server-id: ossrh
+        server-username: MAVEN_USERNAME
+        server-password: MAVEN_PASSWORD
 
     - name: Build with Maven
       run: |
@@ -88,6 +91,12 @@ jobs:
         name: Amadeus-Keytool-Plugin
         path: target/amadeus-keytool-plugin-${{ needs.semver.outputs.GITVERSION_SEMVER }}*.jar
 
+    - name: Publish package
+      env:
+        MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+        MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
+      run: |
+        mvn --batch-mode deploy
 
   release:
     needs: [semver,build]
