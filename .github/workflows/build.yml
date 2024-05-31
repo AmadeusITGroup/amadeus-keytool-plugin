@@ -91,7 +91,8 @@ jobs:
         name: Amadeus-Keytool-Plugin
         path: target/amadeus-keytool-plugin-${{ needs.semver.outputs.GITVERSION_SEMVER }}*.jar
 
-    - name: Publish package
+    - name: Publish package if we are on main branch
+      if: github.ref == 'refs/heads/main'
       env:
         MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
         MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
