@@ -68,6 +68,7 @@ public class KeytoolMavenPlugin extends AbstractMojo {
 	
     /**
      * A list of <code>fileSet</code> rules to select certificates.
+     * See https://maven.apache.org/shared/file-management/examples/mojo.html
      */
     @Parameter
     private FileSet[] filesets;
@@ -262,16 +263,19 @@ public class KeytoolMavenPlugin extends AbstractMojo {
         }
         
         int count = 0;
-  
+
+        // See https://maven.apache.org/shared/file-management/examples/mojo.html
         FileSetManager fileSetManager = new FileSetManager();
 
         for (FileSet fileset: filesets) {
             if (fileset == null) {
                 throw new IllegalStateException("filesets must not contain null entries");
             }
+            getLog().info("fileset " + fileset);
             String[] files = null;
             try {
                 files = fileSetManager.getIncludedFiles(fileset);
+                getLog().info("files " + files);
 
                 for (String includedFile: files) {
                     File cert = new File(fileset.getDirectory() + "/" + includedFile);
