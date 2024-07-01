@@ -367,6 +367,7 @@ public class KeytoolMavenPlugin extends AbstractMojo {
     
     boolean haveFileset() {
     	getLog().debug("filesets=" + filesets);
+    	getLog().debug("fileset=" + fileset);
     	
     	if (filesets != null && filesets.length > 0) {
             return true;
