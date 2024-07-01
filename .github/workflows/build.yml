@@ -91,15 +91,22 @@ jobs:
       with:
         name: Amadeus-Keytool-Plugin
         path: target/amadeus-keytool-plugin-${{ needs.semver.outputs.GITVERSION_SEMVER }}*.jar
+     
+    # Now that we updated the secrets - do we need this at all?
+    #- name: Import GPG key
+    #  uses: crazy-max/ghaction-import-gpg@v1
+    #  env:
+    #     GPG_PRIVATE_KEY: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+    #     PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
 
     - name: Publish package if we are on main branch
       if: github.ref == 'refs/heads/main'
       env:
         MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
         MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
-        MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
       run: |
-        mvn --batch-mode -X deploy
+        mvn --batch-mode deploy
 
   release:
     needs: [semver,build]
