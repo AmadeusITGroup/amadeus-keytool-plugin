@@ -2,6 +2,7 @@ package com.amadeus.maven;
 
 import com.amadeus.keytool.Keytool;
 import java.io.File;
+import java.io.IOException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
@@ -73,6 +74,13 @@ public class KeytoolMavenPlugin extends AbstractMojo {
      */
     @Parameter
     private FileSet[] filesets;
+    
+    /**
+     * A <code>fileSet</code> to select certificates.
+     * See https://maven.apache.org/shared/file-management/examples/mojo.html
+     */
+    @Parameter
+    private FileSet fileset;
     
     /**
      * Counts the amount of keystore entries that were touched (inserted/updated/removed).
@@ -149,6 +157,26 @@ public class KeytoolMavenPlugin extends AbstractMojo {
     }
 
     /**
+     * Returns the certificate fileset. Maven has access based on annotations,
+     * this method is introduced for unit testing.
+     * 
+     * @return the fileset
+     */
+    public FileSet getFileset() {
+        return fileset;
+    }
+
+    /**
+     * Sets the certificate fileset. Maven has access based on annotations,
+     * this method is introduced for unit testing.
+     * 
+     * @param fileset the fileset
+     */
+    public void setFileset(FileSet fileset) {
+        this.fileset = fileset;
+    }
+
+    /**
      * Returns the certificate filesets. Maven has access based on annotations,
      * this method is introduced for unit testing.
      * 
@@ -204,6 +232,7 @@ public class KeytoolMavenPlugin extends AbstractMojo {
         getLog().debug("  keystore=" + keystore);
         getLog().debug("  password= **********");
         getLog().debug("  certificateFile=" + certificateFile);
+        getLog().debug("  fileset=" + fileset);
         getLog().debug("  filesets=" + filesets);
 		
         try {
@@ -262,6 +291,40 @@ public class KeytoolMavenPlugin extends AbstractMojo {
             throw new BuildException(e.getClass().getName() + ": " + e.getMessage(), e);
         }
     }
+    
+    private void importFileSet(FileSetManager fileSetManager, FileSet fileset) throws IOException, KeyStoreException, CertificateException, NoSuchAlgorithmException {
+        getLog().debug("fileset " + fileset);
+        getLog().debug("fileset dir      " + fileset.getDirectory());
+        getLog().debug("fileset dirmode  " + fileset.getDirectoryMode());
+        getLog().debug("fileset filemode " + fileset.getFileMode());
+        getLog().debug("fileset lineend " + fileset.getLineEnding());
+        getLog().debug("fileset modelencoding " + fileset.getModelEncoding());
+        getLog().debug("fileset output dir " + fileset.getOutputDirectory());
+        getLog().debug("fileset excludes " + fileset.getExcludes());
+        getLog().debug("fileset excludesarray " + fileset.getExcludesArray());
+        getLog().debug("fileset includes " + fileset.getIncludes());
+        getLog().debug("fileset includesarray " + fileset.getIncludesArray());
+        getLog().debug("fileset mapper " + fileset.getMapper());
+
+        String[] files = null;
+        try {
+            files = fileSetManager.getIncludedFiles(fileset);
+            getLog().debug("files " + Arrays.asList(files));
+            getLog().debug("fileset has " + files.length + " files");
+
+            for (String includedFile: files) {
+                getLog().debug("importing " + includedFile);
+                File cert = new File(fileset.getDirectory() + "/" + includedFile);
+                getLog().info("importing " + cert);
+
+                // now import the cert file with alias cert.getName() into the keystore
+                new Keytool().importCertificate(keystore, password.toCharArray(), includedFile, cert);
+                entriesTouched++;
+            }
+        } catch (NullPointerException e) {
+            getLog().warn("FileSet has no included files");
+        }
+    }
 
     /**
      * Imports all certificates from the fileset.
@@ -274,35 +337,29 @@ public class KeytoolMavenPlugin extends AbstractMojo {
      * 
      */
     private void importAll() throws KeyStoreException, java.io.IOException, CertificateException, NoSuchAlgorithmException {
-        if (filesets == null) {
-            throw new IllegalStateException("filesets must not be null");
+        if (filesets == null && fileset == null) {
+            throw new IllegalStateException("fileset and filesets must not be null at the same time");
         }
         
-        getLog().info("filesets " + Arrays.asList(filesets));
+        if (filesets != null) {
+            getLog().debug("filesets " + Arrays.asList(filesets));
+        } else {
+            getLog().debug("filesets " + filesets);
+        }
+        getLog().debug("fileset " + fileset);
 
         // See https://maven.apache.org/shared/file-management/examples/mojo.html
         FileSetManager fileSetManager = new FileSetManager();
 
-        for (FileSet fileset: filesets) {
-            if (fileset == null) {
-                throw new IllegalStateException("filesets must not contain null entries");
-            }
-            getLog().info("fileset " + fileset);
-            String[] files = null;
-            try {
-                files = fileSetManager.getIncludedFiles(fileset);
-                getLog().info("files " + files);
-
-                for (String includedFile: files) {
-                    File cert = new File(fileset.getDirectory() + "/" + includedFile);
-                    getLog().info("importing " + cert);
-
-                    // now import the cert file with alias cert.getName() into the keystore
-                    new Keytool().importCertificate(keystore, password.toCharArray(), includedFile, cert);
-                    entriesTouched++;
+        if (fileset != null) {
+            importFileSet(fileSetManager, fileset);
+        }
+        if (filesets != null) {
+            for (FileSet fileset: filesets) {
+                if (fileset == null) {
+                    throw new IllegalStateException("filesets must not contain null entries");
                 }
-            } catch (NullPointerException e) {
-                getLog().warn("FileSet has no included files");
+                importFileSet(fileSetManager, fileset);
             }
         }
         getLog().info(String.format("Imported %d certificates", entriesTouched));
@@ -311,10 +368,14 @@ public class KeytoolMavenPlugin extends AbstractMojo {
     boolean haveFileset() {
     	getLog().debug("filesets=" + filesets);
     	
-    	if (filesets == null) {
-            return false;
+    	if (filesets != null && filesets.length > 0) {
+            return true;
     	}
-    	
-    	return filesets.length > 0;
+    
+        if (fileset != null) {
+            return true;
+        }
+        
+        return false;
     }
 }

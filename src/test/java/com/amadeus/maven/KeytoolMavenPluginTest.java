@@ -482,4 +482,41 @@ public class KeytoolMavenPluginTest {
         // after list
         assertEquals(0, instance.getEntriesTouched());
     }
+    
+    /**
+     * Test of execute method, of class KeytoolMavenPlugin.
+     */
+    @Test
+    public void testExecute8() throws Exception {
+        log.info("execute8");
+        File keystore = new File("target/test/keystore8.jks");
+        KeytoolMavenPlugin instance = new KeytoolMavenPlugin();
+        instance.setAction("create");
+        instance.setKeystore(keystore);
+        instance.setPassword("blah");
+        instance.execute(); // create the keystore
+        // after create keystore
+        assertEquals(0, instance.getEntriesTouched());
+        
+        FileSet fileset = new FileSet();
+        fileset.setDirectory("src/test/data/othercerts");
+        fileset.addInclude("**.crt");
+        
+        instance = new KeytoolMavenPlugin();
+        instance.setAction("import");
+        instance.setKeystore(keystore);
+        instance.setPassword("blah");
+        instance.setFileset(fileset);
+        instance.execute();
+        // after import
+        assertEquals(1, instance.getEntriesTouched());
+        
+        instance = new KeytoolMavenPlugin();
+        instance.setKeystore(keystore);
+        instance.setPassword("blah");
+        instance.setAction("list");
+        instance.execute();
+        // after list
+        assertEquals(0, instance.getEntriesTouched());
+    }
 }
