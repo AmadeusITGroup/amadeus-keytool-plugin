@@ -458,6 +458,8 @@ public class KeytoolMavenPluginTest {
         instance.setKeystore(keystore);
         instance.setPassword("blah");
         instance.execute(); // create the keystore
+        // after create keystore
+        assertEquals(0, instance.getEntriesTouched());
         
         FileSet fileset = new FileSet();
         fileset.setDirectory("src/test/data/certificates");
@@ -469,11 +471,15 @@ public class KeytoolMavenPluginTest {
         instance.setPassword("blah");
         instance.setFilesets(new FileSet[]{fileset});
         instance.execute();
+        // after import
+        assertEquals(2, instance.getEntriesTouched());
         
         instance = new KeytoolMavenPlugin();
         instance.setKeystore(keystore);
         instance.setPassword("blah");
         instance.setAction("list");
         instance.execute();
+        // after list
+        assertEquals(0, instance.getEntriesTouched());
     }
 }

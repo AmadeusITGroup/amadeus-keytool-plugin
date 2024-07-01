@@ -73,6 +73,20 @@ public class KeytoolMavenPlugin extends AbstractMojo {
      */
     @Parameter
     private FileSet[] filesets;
+    
+    /**
+     * Counts the amount of keystore entries that were touched (inserted/updated/removed).
+     */
+    private int entriesTouched = 0;
+    
+    /**
+     * Returns the amount of keystore entries that were touched (inserted/updated/removed).
+     * 
+     * @return the amount
+     */
+    public int getEntriesTouched() {
+        return entriesTouched;
+    }
 
     /**
      * Returns the action to execute. Maven has access based on annotations,
@@ -229,6 +243,7 @@ public class KeytoolMavenPlugin extends AbstractMojo {
                     }
                     new Keytool().importCertificate(keystore, password.toCharArray(), certificateAlias, certificateFile);
                     getLog().info("Imported 1 certificate");
+                    entriesTouched++;
                 } else {
                     importAll();
                 }
@@ -263,7 +278,7 @@ public class KeytoolMavenPlugin extends AbstractMojo {
             throw new IllegalStateException("filesets must not be null");
         }
         
-        int count = 0;
+        getLog().info("filesets " + Arrays.asList(filesets));
 
         // See https://maven.apache.org/shared/file-management/examples/mojo.html
         FileSetManager fileSetManager = new FileSetManager();
@@ -284,13 +299,13 @@ public class KeytoolMavenPlugin extends AbstractMojo {
 
                     // now import the cert file with alias cert.getName() into the keystore
                     new Keytool().importCertificate(keystore, password.toCharArray(), includedFile, cert);
-                    count++;
+                    entriesTouched++;
                 }
             } catch (NullPointerException e) {
                 getLog().warn("FileSet has no included files");
             }
         }
-        getLog().info(String.format("Imported %d certificates", count));
+        getLog().info(String.format("Imported %d certificates", entriesTouched));
     }
     
     boolean haveFileset() {
