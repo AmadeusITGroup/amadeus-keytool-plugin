@@ -5,6 +5,7 @@ import java.io.File;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
+import java.util.Arrays;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -68,6 +69,7 @@ public class KeytoolMavenPlugin extends AbstractMojo {
 	
     /**
      * A list of <code>fileSet</code> rules to select certificates.
+     * See https://maven.apache.org/shared/file-management/examples/mojo.html.
      */
     @Parameter
     private FileSet[] filesets;
@@ -263,15 +265,18 @@ public class KeytoolMavenPlugin extends AbstractMojo {
         
         int count = 0;
   
+        // see https://maven.apache.org/shared/file-management/examples/mojo.html
         FileSetManager fileSetManager = new FileSetManager();
 
         for (FileSet fileset: filesets) {
             if (fileset == null) {
                 throw new IllegalStateException("filesets must not contain null entries");
             }
+            
             String[] files = null;
             try {
                 files = fileSetManager.getIncludedFiles(fileset);
+                getLog().debug("included: {}" + String.valueOf(Arrays.asList(files)));
 
                 for (String includedFile: files) {
                     File cert = new File(fileset.getDirectory() + "/" + includedFile);
