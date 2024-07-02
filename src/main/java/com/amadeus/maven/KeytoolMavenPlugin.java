@@ -293,6 +293,13 @@ public class KeytoolMavenPlugin extends AbstractMojo {
     }
     
     private void importFileSet(FileSetManager fileSetManager, FileSet fileset) throws IOException, KeyStoreException, CertificateException, NoSuchAlgorithmException {
+        if (fileSetManager == null) {
+            throw new IllegalArgumentException("fileSetManager must not be null");
+        }
+        if (fileset == null) {
+            throw new IllegalArgumentException("fileset must not be null");
+        }
+        
         getLog().debug("fileset " + fileset);
         getLog().debug("fileset dir      " + fileset.getDirectory());
         getLog().debug("fileset dirmode  " + fileset.getDirectoryMode());
@@ -306,6 +313,10 @@ public class KeytoolMavenPlugin extends AbstractMojo {
         getLog().debug("fileset includesarray " + fileset.getIncludesArray());
         getLog().debug("fileset mapper " + fileset.getMapper());
 
+        if (fileset.getDirectory() == null) {
+            throw new IllegalArgumentException("Fileset does not have directory. Check the <directory/> element in the configuration.");
+        }
+        
         String[] files = null;
         try {
             files = fileSetManager.getIncludedFiles(fileset);
