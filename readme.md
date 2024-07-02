@@ -176,6 +176,19 @@ you will not need them all.
 
 ## Usage via CLI
 
+To run amadeus-keytool-plugin on the command line, run this command:
+
+java -jar amadeus-keytool-plugin.jar [options]
+
+Valid options are:
+
+-gk, --generateKeystore              generate a new keystore
+-ic, --importCertificate             import one certificate. Requires the certificate option.
+-ks, --keystore <path>               path to the keystore
+-kp, --keystorePassword <password>   password to be used for keystore
+-crt, --certificate <path>           path to certificate
+-a, --alias <name>                   Alias for the certificate in the keystore
+
 ## Build & Deployment
 
 The project itself is a Maven build. Thus you can run Maven to build and run

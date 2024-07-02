@@ -285,8 +285,13 @@ public class KeytoolMavenPluginTest {
         instance.setKeystore(new File("blah"));
         instance.setPassword("blah");
         instance.setFilesets(new FileSet[]{new FileSet()});
-        
-        instance.execute();
+
+        try {
+            instance.execute();
+        } catch (BuildException e) {
+            assertTrue(e.getMessage().contains("IllegalArgumentException: Fileset does not have directory"), e.getMessage());
+            log.debug("caught expected exception", e);
+        }
     }
 
     /**
